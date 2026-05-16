@@ -1,5 +1,7 @@
 # EchoAlertAI - AI-Powered Emergency Detection
 
+**Live Demo:** [https://mohanraj9342.github.io/emergency-detector/](https://mohanraj9342.github.io/emergency-detector/)
+
 GitHub Pages TensorFlow TensorFlow.js
 
 Smart real-time identification of emergency vs non-emergency visual situations using deep learning and computer vision.
@@ -24,9 +26,7 @@ All inference runs locally in the browser with TensorFlow.js, so user images do 
 - Responsive dashboard with confidence visualization
 - Clean static-host deployment (GitHub Pages ready)
 
-## Live Demo
 
-- Add your GitHub Pages URL here: `https://<username>.github.io/<repo-name>/`
 
 ## Features
 
@@ -114,15 +114,7 @@ http://127.0.0.1:8000
 - Or switch to Upload mode and analyze an image
 - Review confidence scores and alert state
 
-## How to Deploy on GitHub Pages
 
-1. Push these required files/folders:
-   - `index.html`
-   - `css/`
-   - `js/`
-   - `tfjs_graph_model/`
-2. In GitHub repository settings, enable Pages from the default branch root.
-3. Wait for deployment and open your Pages URL.
 
 ## Notes
 
