@@ -1,10 +1,8 @@
-# EchoAlertAI - AI-Powered Emergency Detection
+# 🛡️ EchoAlertAI - AI-Powered Emergency Detection
 
-**Live Demo:** [https://mohanraj9342.github.io/emergency-detector/](https://mohanraj9342.github.io/emergency-detector/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Demo-brightgreen)](https://mohanraj9342.github.io/emergency-detector/)
 
-GitHub Pages TensorFlow TensorFlow.js
-
-Smart real-time identification of emergency vs non-emergency visual situations using deep learning and computer vision.
+> Smart real-time identification of emergency vs non-emergency visual situations using deep learning and computer vision.
 
 ## Project Overview
 
