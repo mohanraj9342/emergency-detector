@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="AI-powered real-time emergency detection system using EfficientNetB3 deep learning model via webcam or image upload.">
+  <title>EchoAlertAI — Real-Time Emergency Detector</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+</head>
+
+<body>
+  <!-- Animated background grid -->
+  <div class="bg-grid"></div>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app-wrapper">
+
+    <!-- ── TOP NAV ── -->
+    <nav class="topnav">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <i class="fas fa-shield-halved"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">EchoAlertAI</span>
+          <span class="brand-tagline">Emergency Detection System</span>
+        </div>
+      </div>
+      <div class="nav-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="engineState" class="status-label">Initializing</span>
+      </div>
+      <div class="nav-model-badge">
+        <i class="fas fa-microchip"></i>
+        EfficientNetB3
+      </div>
+    </nav>
+
+    <!-- ── MAIN CONTENT ── -->
+    <main class="main-layout">
+
+      <!-- LEFT: Camera / Upload Panel -->
+      <section class="card feed-card" style="align-self: start">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fas fa-eye"></i> Live Feed</h2>
+          <div class="mode-tabs">
+            <button id="cameraModeBtn" class="tab-btn active" type="button">
+              <i class="fas fa-camera"></i> Camera
+            </button>
+            <button id="uploadModeBtn" class="tab-btn" type="button">
+              <i class="fas fa-image"></i> Upload
+            </button>
+          </div>
+        </div>
+
+        <div class="viewer-wrap">
+          <div class="viewer" id="viewerBox">
+            <video id="webcam" autoplay playsinline muted></video>
+            <img id="uploadPreview" alt="Uploaded preview" hidden>
+            <canvas id="overlay"></canvas>
+
+            <!-- Scan line animation overlay when running -->
+            <div class="scan-overlay" id="scanOverlay" hidden>
+              <div class="scan-line"></div>
+            </div>
+
+            <!-- Corner brackets -->
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+
+            <div id="loadingMask" class="loading-mask">
+              <span id="loadingText" class="ready-text">Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <input id="fileInput" type="file" accept="image/*" hidden>
+
+        <!-- Unified controls: one area, two sub-rows toggled by tab -->
+        <div class="feed-controls">
+          <!-- Camera row -->
+          <div id="cameraControls" class="controls-row">
+            <button id="startBtn" class="action-btn primary" type="button">
+              <i class="fas fa-play"></i> Start Camera
+            </button>
+            <button id="stopBtn" class="action-btn secondary" type="button" disabled>
+              <i class="fas fa-stop"></i> Stop
+            </button>
+            <button id="clearCameraBtn" class="action-btn ghost" type="button">
+              <i class="fas fa-rotate-left"></i> Clear
+            </button>
+          </div>
+          <!-- Upload row -->
+          <div id="uploadControls" class="controls-row" hidden>
+            <button id="uploadBtn" class="action-btn primary" type="button">
+              <i class="fas fa-folder-open"></i> Choose Image
+            </button>
+            <button id="analyzeBtn" class="action-btn accent" type="button" disabled>
+              <i class="fas fa-magnifying-glass"></i> Analyze
+            </button>
+            <button id="clearUploadBtn" class="action-btn ghost" type="button">
+              <i class="fas fa-rotate-left"></i> Clear
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: Analysis Panel -->
+      <aside class="right-panel">
+
+        <!-- Alert Status Card -->
+        <div class="card alert-card" id="alertCard">
+          <div class="alert-header">
+            <span class="alert-eyebrow">PREDICTION</span>
+            <div class="alert-icon-wrap" id="alertIconWrap">
+              <i class="fas fa-circle-check" id="alertIcon"></i>
+            </div>
+          </div>
+          <div id="alertBadge" class="threat-badge normal">NO EMERGENCY</div>
+          <div class="threat-sub" id="threatSub">All systems normal</div>
+        </div>
+
+        <!-- Analysis Card -->
+        <div class="card metrics-card">
+          <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-chart-bar"></i> Analysis</h3>
+          </div>
+
+          <!-- ONE centered half-circle gauge -->
+          <div class="gauge-single-wrap">
+            <div class="gauge-block">
+              <svg class="gauge-svg gauge-big" viewBox="0 0 100 60">
+                <path class="gauge-bg" d="M10,55 A40,40 0 0,1 90,55" stroke-width="10" fill="none" />
+                <path id="emergencyArc" d="M10,55 A40,40 0 0,1 90,55"
+                  stroke-width="10" fill="none" stroke-dasharray="0 126"
+                  stroke="var(--cyan)" stroke-linecap="round"
+                  style="transition: stroke-dasharray 0.5s ease, stroke 0.3s ease;" />
+              </svg>
+              <div class="gauge-center-text">
+                <strong id="emergencyScore">0.00%</strong>
+                <small>Prediction</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emergency probability bar -->
+          <div class="metric-row">
+            <span class="metric-label"><i class="fas fa-triangle-exclamation"></i> Emergency Prob.</span>
+            <span class="metric-val" id="emergencyPct">0.00%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill danger-fill" id="emergencyBar" style="width:0%"></div>
+          </div>
+
+          <!-- Non-Emergency probability bar -->
+          <div class="metric-row" style="margin-top:14px">
+            <span class="metric-label"><i class="fas fa-circle-check"></i> Non-Emergency Prob.</span>
+            <span class="metric-val" id="normalPct">0.00%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill safe-fill" id="normalBar" style="width:0%"></div>
+          </div>
+
+          <!-- Raw output -->
+          <div class="raw-row">
+            <span class="raw-label">Model Raw Output</span>
+            <code class="raw-val" id="rawScore">0.0000</code>
+          </div>
+        </div>
+
+      </aside>
+    </main>
+
+    <!-- ── GET IN TOUCH FOOTER ── -->
+    <footer class="contact-footer">
+      <div class="contact-inner">
+        <div class="contact-heading">
+          <h2 class="contact-title">Get In Touch</h2>
+          <p class="contact-sub">Let's discuss this project or collaborate on future AI initiatives</p>
+        </div>
+
+        <div class="contact-cards">
+
+          <!-- Gmail -->
+          <a id="contact-gmail"
+             href="mailto:mohanrajvelayutham08@gmail.com"
+             class="contact-card"
+             target="_blank" rel="noopener noreferrer">
+            <div class="contact-icon gmail-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Gmail</span>
+              <span class="contact-value">mohanrajvelayutham08@gmail.com</span>
+            </div>
+            <i class="fas fa-arrow-up-right-from-square contact-arrow"></i>
+          </a>
+
+          <!-- GitHub -->
+          <a id="contact-github"
+             href="https://github.com/mohanraj9342"
+             class="contact-card"
+             target="_blank" rel="noopener noreferrer">
+            <div class="contact-icon github-icon">
+              <i class="fab fa-github"></i>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">GitHub</span>
+              <span class="contact-value">github.com/mohanraj9342</span>
+            </div>
+            <i class="fas fa-arrow-up-right-from-square contact-arrow"></i>
+          </a>
+
+          <!-- Project Repository (placeholder) -->
+          <a id="contact-repo"
+             href="#"
+             class="contact-card contact-card-disabled"
+             aria-disabled="true"
+             title="Repository link will be added soon">
+            <div class="contact-icon repo-icon">
+              <i class="fas fa-code-branch"></i>
+            </div>
+            <div class="contact-info">
+              <span class="contact-label">Project Resources</span>
+              <span class="contact-value">View Project Repository</span>
+            </div>
+            <span class="coming-soon-badge">Coming Soon</span>
+          </a>
+
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="js/model.js?v=20260412-6"></script>
+  <script src="js/main.js?v=20260412-6"></script>
+  <script src="js/ui.js?v=20260412-6"></script>
+</body>
+
+</html>
