@@ -90,8 +90,8 @@ OldFinalRedeploy/
 ### 1) Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd OldFinalRedeploy
+git clone https://github.com/mohanraj9342/emergency-detector.git
+cd emergency-detector
 ```
 
 ### 2) Run Locally
